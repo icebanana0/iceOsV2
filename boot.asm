@@ -1,4 +1,7 @@
 [org 0x7c00]
+
+%define ENDL 0x0D, 0x0A
+
 KERNEL_LOCATION equ 0x1000
 mov [BOOT_DISK], dl
 xor ax, ax                          
@@ -18,8 +21,6 @@ int 0x13
 mov ah, 0x0
 mov al, 0x3
 int 0x10
-mov si, boot_msg
-call PrintString
 cli
 lgdt [GDT_descriptor]
 mov eax, cr0
@@ -29,21 +30,6 @@ jmp CODE_SEG:start_protected_mode
 jmp $
 
 BOOT_DISK: db 0
-boot_msg db 'Booting...', 0
-
-PrintString:
-    pusha
-    mov ah, 0x0E
-    .PrintStringLoop:
-        lodsb
-        cmp al, 0
-        je .PrintStringDone
-        int 0x10
-        jmp .PrintStringLoop
-    .PrintStringDone:
-    popa
-    ret
-
 GDT_start:
     GDT_null:
         dd 0x0
