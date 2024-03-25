@@ -1,19 +1,19 @@
-#include "../drivers/ports.h"
+#define ROWS 25
+#define COLS 80
 
-void main() {
-    // Example port and data/values for demonstration purposes
-    uint16_t port = 0x3F8; // COM1 serial port, for example
-    uint8_t data = 0xFF;
-    uint16_t value = 0xFFFF;
-
-    outb(port, data);  // Send a byte to a port
-    uint8_t receivedData = inb(port); // Read a byte from a port
-
-    outw(port, value);  // Send a word (2 bytes) to a port
-    uint16_t receivedValue = inw(port); // Read a word (2 bytes) from a port
-}
-
-void printc(char c) 
+void main()
 {
-    *(char*)0xb8000 = c;
+    char* mem = (char*) 0xb8000;
+	// Fill the screen with 'x'
+	int i, j;
+	for (i = 0; i < COLS; i++) {
+		for (j = 0; j < ROWS; j++) {
+			mem[(i + COLS * j)*2] = 'x';
+		}
+	}
+	mem[0] = '-';
+	mem[2] = 'O';
+	mem[4] = 'S';
+	mem[6] = '9';
+	mem[8] = '-';
 }
