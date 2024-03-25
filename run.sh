@@ -1,5 +1,4 @@
-nasm -fbin src/boot.asm -o build/boot.bin
-gcc -ffreestanding -c src/kernel.c -o build/kernel.o
-ld -o build/kernel.bin -Ttext 0x1000 build/kernel.o --oformat binary
-cat build/boot.bin build/kernel.bin > build/ice.bin
-qemu-system-i386 build/ice.bin
+nasm -f elf32 boot.asm -o build/boot.o
+gcc -m32 -ffreestanding -c kernel.c -o build/kernel.o
+ld -m elf_i386 -T linker.ld build/boot.o build/kernel.o -o build/iceOs.elf
+qemu-system-i386 -kernel build/iceOs.elf
