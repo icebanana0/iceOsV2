@@ -1,19 +1,26 @@
-#define ROWS 25
-#define COLS 80
+#include <stdint.h>
+#include "../types.h"
+#define VGA 0xb8000
+#define VGA_COLS 80
+#define VGA_ROWS 25
 
-void main()
-{
-    char* mem = (char*) 0xb8000;
-	// Fill the screen with 'x'
-	int i, j;
-	for (i = 0; i < COLS; i++) {
-		for (j = 0; j < ROWS; j++) {
-			mem[(i + COLS * j)*2] = 'x';
-		}
-	}
-	mem[0] = '-';
-	mem[2] = 'O';
-	mem[4] = 'S';
-	mem[6] = '9';
-	mem[8] = '-';
+void printc(char c, uint8 color, int x, int y) {
+    volatile uint16* mem = (uint16*)VGA;
+    uint16 entry = (color << 8) | c;
+    uint16 offset = y * VGA_COLS + x;
+    mem[offset] = entry;
+}
+
+int main() {
+    for (int i = 0; i < VGA_COLS * VGA_ROWS; i++) {
+        printc(' ', 0x00, i % VGA_COLS, i / VGA_COLS);
+    }
+
+    printc('H', 0x0F, 0, 0);
+    printc('e', 0x0F, 1, 0);
+    printc('l', 0x0F, 2, 0);
+    printc('l', 0x0F, 3, 0);
+    printc('o', 0x0F, 4, 0);
+
+    return 0;
 }
