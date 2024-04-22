@@ -1,12 +1,20 @@
-export PATH=$PATH:/usr/local/i386elfgcc/bin
+#!/bin/bash
 
-nasm "bootloader/boot.asm" -f bin -o "build/boot.bin"
-nasm "bootloader/kernelEntry.asm" -f elf -o "build/kernelEntry.o"
-i386-elf-gcc -ffreestanding -m32 -g -c "kernel/kernel.c" -o "build/kernel.o"
-nasm "bootloader/zeroes.asm" -f bin -o "build/zeroes.bin"
+# Build the bootloader
+nasm -f bin boot/bootloader.asm -o bootloader.bin
 
-i386-elf-ld -o "build/fullKernel.bin" -Ttext 0x1000 "build/kernelEntry.o" "build/kernel.o" --oformat binary
+gcc -ffreestanding -fno-stack-protector -fno-pie -c kernel/kernel.c -o kernel.o -m32
+gcc -ffreestanding -fno-stack-protector -fno-pie -c lib/stdio.c -o stdio.o -m32
+gcc -ffreestanding -fno-stack-protector -fno-pie -c lib/stdlib.c -o stdlib.o -m32
+gcc -ffreestanding -fno-stack-protector -fno-pie -c lib/string.c -o string.o -m32
+gcc -ffreestanding -fno-stack-protector -fno-pie -c drivers/video.c -o video.o -m32
+gcc -ffreestanding -fno-stack-protector -fno-pie -c drivers/keyboard.c -o keyboard.o -m32
 
-cat "build/boot.bin" "build/fullKernel.bin" "build/zeroes.bin"  > "build/iceOs.bin"
+nasm -f elf32 kernel/kernel.asm -o kernelasm.o
 
-qemu-system-x86_64 -drive format=raw,file="build/iceOs.bin",index=0,if=floppy,  -m 128M
+ld -melf_i386 -o kernel.bin -Ttext 0x1000 kernelasm.o kernel.o stdlib.o stdio.o string.o video.o keyboard.o --oformat binary -T kernel/link.ld
+
+cat bootloader.bin kernel.bin > iceOsV2
+
+
+qemu-system-x86_64 iceOsV2

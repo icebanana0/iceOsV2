@@ -1,52 +1,142 @@
-#include "../types.h"
+#include "../include/stdlib.h"
+ #include "../include/string.h"
+#include "../include/video.h"
+ #include "../include/stdio.h"
+#include "../include/keyboard.h"
 
-#define VGA_COLS 80
-#define VGA_ROWS 25
-#define VGA ((uint16*)0xB8000)
 
-void printc(char c, uint8 color, int x, int y) {
-    volatile uint16* mem = VGA;
-    uint16 entry = (color << 8) | c;
-    uint16 offset = y * VGA_COLS + x;
-    mem[offset] = entry;
+char* calc=
+"+---------------------------+\n"
+"| ///////////////////////// |\n"
+"+---------------------------+\n"
+"| [              1,264.45 ] |\n"
+"+---------------------------+\n"
+"|                           |\n"
+"|                           |\n"
+"| [sto] [rcl] [<--] [AC/ON] |\n"
+"|                           |\n"
+"| [ ( ] [ ) ] [sqr] [  /  ] |\n"
+"|                           |\n"
+"| [ 7 ] [ 8 ] [ 9 ] [  *  ] |\n"
+"|                           |\n"
+"| [ 4 ] [ 5 ] [ 6 ] [  -  ] |\n"
+"|                           |\n"
+"| [ 1 ] [ 2 ] [ 3 ] [  +  ] |\n"
+"|                           |\n"
+"| [ 0 ] [ . ] [+/-] [  =  ] |\n"
+"|                           |\n"
+"+---------------------------+\n";
+  
+
+void startcalc();
+
+void main() {
+
+	clear_screen();
+	while(1)
+	{
+		char buf[20];
+		scan(buf,10);
+		if(strcmp(buf,"calc")==0)
+		{
+
+		  startcalc();
+		  printtext("quited from calc\n",0x04,0);
+		}
+		else if(strcmp(buf,"help")==0)
+		{
+		 printtext("commands: \ncalc-->start calc\nwhoami-->print me :D\nhelp-->print that\nclear-->clear screen\n",0x0a,0);
+		}
+		else if(strcmp(buf,"clear")==0)
+		{
+			clear_screen();
+		}
+		else if (strlen(buf)>0)printtext("unknown command\n",0x04,0);
+
+	}
+	 
+
+
+
+
 }
+void startcalc()
+ {	
+	printtext(calc,0x0a,'#');
+	next_line();
+	printtext("operand a,b.operation +,-,/,* q-quit from calc write ops with numpad\n",0x0a,0);
+		  
+ 	int stat=1;
+ 	while(stat)
+ 	{
+		 next_line();
+		printtext("a:",0x0a,0);
 
-void scroll() {
-    volatile uint16* mem = VGA;
-    for (int row = 0; row < VGA_ROWS - 1; row++) {
-        for (int col = 0; col < VGA_COLS; col++) {
-            mem[row * VGA_COLS + col] = mem[(row + 1) * VGA_COLS + col];
-        }
-    }
+		char ac[10];
+		scan(ac,10);
 
-    uint16 blank = 0x00 | ' ';
-    for (int col = 0; col < VGA_COLS; col++) {
-        mem[(VGA_ROWS - 1) * VGA_COLS + col] = blank;
-    }
-}
+		int a=atoi(ac);
 
-void printString(const char* string, uint8 color, int x, int y) {
-    int i = 0;
-    while (string[i] != '\0') {
-        if (x >= VGA_COLS) {
-            x = 0;
-            y++;
-        }
-        if (y >= VGA_ROWS) {
-            scroll();
-            y--;
-        }
-        printc(string[i], color, x, y);
-        i++;
-        x++;
-    }
-}
+		printtext("b:",0x0a,0);
 
-int main() {
-    for (int i = 0; i < VGA_COLS * VGA_ROWS; i++) {
-        printc(' ', 0x00, i % VGA_COLS, i / VGA_COLS);
-    }
+		char bc[10];
+		scan(bc,10);
+		int b=atoi(bc);
 
-    printString("Hello, World", 0x0F, 0, 0);
-    return 0;
-}
+
+		printtext("op:",0x0a,0);
+		char op[2];
+		scan(op,2);
+
+		 
+		switch(op[0])
+		{	char res[10];
+			case '-':
+			
+				itoa((a-b),res);
+
+				printtext(res,0x0a,0);
+				break;
+
+			case '+':
+
+				
+				itoa((a+b),res);
+
+				printtext(res,0x0a,0);
+				break;
+
+			case '*':
+ 
+				
+				itoa((a*b),res);
+
+				printtext(res,0x0a,0);
+				break;
+
+			case '/':
+
+				
+				itoa((a/b),res);
+
+				printtext(res,0x0a,0);
+				break;
+
+			case 'q':
+				stat=0;
+				break;
+
+		}
+
+
+
+
+	}
+
+
+ }
+
+
+
+
+
