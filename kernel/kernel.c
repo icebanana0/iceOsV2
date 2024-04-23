@@ -75,7 +75,6 @@ void listFiles(SimpleFileSystem* fs) {
     }
 }
 
-void startcalc(); // Placeholder for startcalc function, implement as needed.
 
 void main() {
     initFileSystem(&filesystem);
