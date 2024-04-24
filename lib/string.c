@@ -1,4 +1,4 @@
-
+#include "../include/string.h"
 
 
 int strlen(char *str)

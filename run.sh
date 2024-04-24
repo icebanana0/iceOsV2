@@ -5,7 +5,6 @@ nasm -f bin boot/bootloader.asm -o bootloader.bin
 
 gcc -ffreestanding -fno-stack-protector -fno-pie -c kernel/kernel.c -o kernel.o -m32
 gcc -ffreestanding -fno-stack-protector -fno-pie -c lib/stdio.c -o stdio.o -m32
-gcc -ffreestanding -fno-stack-protector -fno-pie -c lib/stdlib.c -o stdlib.o -m32
 gcc -ffreestanding -fno-stack-protector -fno-pie -c lib/string.c -o string.o -m32
 gcc -ffreestanding -fno-stack-protector -fno-pie -c drivers/video.c -o video.o -m32
 gcc -ffreestanding -fno-stack-protector -fno-pie -c drivers/keyboard.c -o keyboard.o -m32

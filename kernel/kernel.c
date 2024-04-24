@@ -1,5 +1,5 @@
-#include "../include/stdlib.h"
 #include "../include/string.h"
+#include "../include/stdio.h"
 #include "../include/video.h"
 #include "../include/keyboard.h"
 #include "../types.h"
@@ -66,6 +66,21 @@ int createFile(SimpleFileSystem* fs, const char* filename) {
     return -1;
 }
 
+int deleteFile(SimpleFileSystem* fs, const char* filename) {
+    for (int i = 0; i < MAX_FILES; i++) {
+        if (fs->files[i].size != 0 && strcmp(fs->files[i].filename, filename) == 0) {
+            for (int j = 0; j < MAX_BLOCKS && fs->files[i].blocks[j] != 0; j++) {
+                fs->freeBlocks[fs->files[i].blocks[j]] = 1;
+                fs->files[i].blocks[j] = 0;
+            }
+            fs->files[i].size = 0;
+            fs->files[i].filename[0] = '\0';
+            return 0; // File deleted successfully
+        }
+    }
+    return -1; // File not found
+}
+
 void listFiles(SimpleFileSystem* fs) {
     for (int i = 0; i < MAX_FILES; i++) {
         if (fs->files[i].size != 0) {
@@ -75,7 +90,6 @@ void listFiles(SimpleFileSystem* fs) {
     }
 }
 
-
 void main() {
     initFileSystem(&filesystem);
     clear_screen();
@@ -83,7 +97,7 @@ void main() {
         char buf[99];
         scan(buf, 99);
         if(strcmp(buf, "help") == 0) {
-            printtext("commands:\nhelp-->print this\nclear-->clear screen\ncreate-->creates a file\nlist-->list files\n", 0x0a, 0);
+            printtext("commands:\nhelp-->print this\nclear-->clear screen\ncreate-->creates a file\ndelete-->deletes a file\nlist-->list files\n", 0x0a, 0);
         }
         else if(strcmp(buf, "clear") == 0) {
             clear_screen();
@@ -96,6 +110,16 @@ void main() {
                 printtext("File created successfully!\n", 0x0a, 0);
             } else {
                 printtext("Failed to create file. No free blocks available.\n", 0x04, 0);
+            }
+        }
+        else if (strcmp(buf, "delete") == 0) {
+            char filename[MAX_FILENAME_LENGTH];
+            printtext("Enter filename to delete: ", 0x0a, 0);
+            scan(filename, MAX_FILENAME_LENGTH);
+            if (deleteFile(&filesystem, filename) == 0) {
+                printtext("File deleted successfully!\n", 0x0a, 0);
+            } else {
+                printtext("File not found or could not be deleted.\n", 0x04, 0);
             }
         }
         else if(strcmp(buf, "list") == 0) {

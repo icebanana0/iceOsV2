@@ -1,5 +1,5 @@
 #include "../include/keyboard.h"
-
+#include "../include/stdio.h"
 #include "../include/video.h"
 
 void scan(char* buf,int n)

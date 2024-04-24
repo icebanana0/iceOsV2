@@ -1,3 +1,4 @@
+#include "../include/video.h"
 #define CHAR_PER_LINE 80
 #define VIDEO_MEMORY 0xb8000
 #define VIDEO_CONTROL_PIN 0x3D4
