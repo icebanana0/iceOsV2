@@ -1,5 +1,5 @@
 #include "../include/string.h"
-
+#include "../types.h"
 
 int strlen(char *str)
 {
@@ -13,6 +13,16 @@ void memcpy(char *source, char *dest, int nbytes) {
         *(dest + i) = *(source + i);
     }
 }
+
+char *strchr(const char *s, int c) {
+    while (*s != (char)c) {
+        if (!*s++) {
+            return NULL;
+        }
+    }
+    return (char *)s;
+}
+
 
 int strcmp(char *str1,char *str2)
 { 

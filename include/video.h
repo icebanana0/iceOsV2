@@ -21,4 +21,4 @@ void next_line();
 void display_prompt();
 void rm_char_in_pos(int pos);
 
-#endif /* VIDEO_DRIVER_H */
+#endif

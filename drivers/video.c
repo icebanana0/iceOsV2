@@ -60,8 +60,6 @@ void clear_screen()
 	       screen+=2;
 	   }
 	set_cursor_pos(0,0);
-	printtext("                           <<NOBOTRO OS v -9.1>>                                \n",0xa0,0);
-
 }
 
 void scroll()
