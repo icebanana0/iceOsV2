@@ -1,128 +1,178 @@
 #include "../include/video.h"
-#define CHAR_PER_LINE 80
+#include "../include/ports.h"
+#define CHAR_PER_LINE80
 #define VIDEO_MEMORY 0xb8000
 #define VIDEO_CONTROL_PIN 0x3D4
 #define VIDEO_DATA_PIN 0x3D5
 
-int cursor_pos = -1;
+int cursor_pos=-1;
 
-// Read a byte from the specified port
-unsigned char port_byte_read(unsigned short port) {
-    unsigned char result;
-    __asm__("inb %1, %0" : "=a"(result) : "dN"(port));
-    return result;
+//return 2 byte.hight 14,low 16
+int get_cursor_pos()
+{
+	if(cursor_pos==-1)
+	{
+		cursor_pos=0;
+
+		 
+		port_byte_write(VIDEO_CONTROL_PIN,14);
+	    cursor_pos=port_byte_read ( VIDEO_DATA_PIN)<<8;	
+	     
+
+
+		port_byte_write ( VIDEO_CONTROL_PIN , 15);
+		cursor_pos+= port_byte_read ( VIDEO_DATA_PIN);
+	}
+return cursor_pos;
+
 }
 
-// Write a byte to the specified port
-void port_byte_write(unsigned short port, unsigned char data) {
-    __asm__("outb %1, %0" : : "dN"(port), "a"(data));
+
+
+
+void set_cursor_pos(int x,int y)
+{
+  
+   int pos = y * 80 + x;
+   cursor_pos=pos;
+   port_byte_write(0x3D4, 14);         
+   port_byte_write(0x3D5, pos >> 8);
+   port_byte_write(0x3D4, 15);
+   port_byte_write(0x3D5, pos);
+
+
+
 }
 
-// Retrieve the current cursor position
-int get_cursor_pos() {
-    if (cursor_pos == -1) {
-        cursor_pos = 0;
-        port_byte_write(VIDEO_CONTROL_PIN, 14);
-        cursor_pos = port_byte_read(VIDEO_DATA_PIN) << 8;
-        port_byte_write(VIDEO_CONTROL_PIN, 15);
-        cursor_pos += port_byte_read(VIDEO_DATA_PIN);
-    }
-    return cursor_pos;
+
+
+void clear_screen()
+{
+
+
+	char* screen=(char*)VIDEO_MEMORY;
+	for (int i = 0; i < 4000; i++)
+	   {
+	       *screen =0x20;
+	       *(screen+1)=0x02;
+
+
+	       screen+=2;
+	   }
+	set_cursor_pos(0,0);
+	printtext("                           <<NOBOTRO OS v -9.1>>                                \n",0xa0,0);
+
 }
 
-// Set the cursor to the specified position
-void set_cursor_pos(int x, int y) {
-    int pos = y * CHAR_PER_LINE + x;
-    cursor_pos = pos;
-    port_byte_write(VIDEO_CONTROL_PIN, 14);
-    port_byte_write(VIDEO_DATA_PIN, pos >> 8);
-    port_byte_write(VIDEO_CONTROL_PIN, 15);
-    port_byte_write(VIDEO_DATA_PIN, pos);
+void scroll()
+{
+	//clear row #2
+	char* screen=(char*)VIDEO_MEMORY+320;
+	for(int i=0;i<3840;i++)
+	{
+		*(screen-160)=*screen;
+
+		screen++;
+
+	}
+
+
+
+}
+void move_next_cursor()
+{
+	int curpos=get_cursor_pos();
+
+
+	int y=curpos/80;
+	int x=curpos%80;
+	x+=1;
+	if(x==80)
+	{
+		y+=1;
+		x=0;
+		 
+	}
+	if(y==25)
+	{
+		scroll();
+		x=0;
+		y-=1;
+	}
+	set_cursor_pos(x,y);
+
 }
 
-// Clear the screen and reset cursor position
-void clear_screen() {
-    char *screen = (char *)VIDEO_MEMORY;
-    for (int i = 0; i < 4000; i++) {
-        *screen = 0x20; // space character
-        *(screen + 1) = 0x02; // attribute byte
-        screen += 2;
-    }
-    set_cursor_pos(0, 0);
-    display_prompt();
+
+void printchar(char c,char colors,char toblink)
+{
+	 
+	int curpos=get_cursor_pos()*2;
+	char* screen=(char*)curpos+VIDEO_MEMORY;
+	if(c=='\n')
+		{
+
+			next_line();
+			curpos=get_cursor_pos()*2;
+			screen=(char*)curpos+VIDEO_MEMORY;
+			return;
+		}
+
+		 
+	*screen=c;
+
+	 
+	if(c==toblink)
+	{
+		*(screen+1)=colors|0b10000000;
+	}
+	else *(screen+1)=colors;
+	screen+=2;
+	move_next_cursor();
+
+}
+void printtext(char* text,char colors,char toblink)
+{
+
+	char c=0;
+	int curpos=get_cursor_pos()*2;
+	char* screen=(char*)curpos+VIDEO_MEMORY;
+	
+	while((c=*text++)!='\0')
+	{		
+		printchar(c,colors,toblink);
+	}
 }
 
-// Scroll the screen up by one line
-void scroll() {
-    char *screen = (char *)VIDEO_MEMORY + 320; // start from line 2
-    for (int i = 0; i < 3840; i++) {
-        *(screen - 160) = *screen; // move line up
-        screen++;
-    }
+
+void next_line()
+{
+	int curpos=get_cursor_pos();
+	int y=curpos/80;
+	int x=curpos%80;
+	x=0;
+	y+=1;
+	if(y==25)
+	{
+		scroll();
+		x=0;
+		y-=1;
+	}
+
+	set_cursor_pos(x,y);
+	printtext(">",0x0a,0);
+
+
 }
 
-// Move the cursor to the next position, considering end of line
-void move_next_cursor() {
-    int curpos = get_cursor_pos();
-    int y = curpos / CHAR_PER_LINE;
-    int x = curpos % CHAR_PER_LINE;
-    x += 1;
-    if (x == CHAR_PER_LINE) {
-        y += 1;
-        x = 0;
-    }
-    if (y == 25) { // if at bottom, scroll up
-        scroll();
-        x = 0;
-        y -= 1;
-    }
-    set_cursor_pos(x, y);
-}
+void rm_char_in_pos(int pos)
+{
 
-// Print a single character at current cursor location
-void printchar(char c, char colors, char toblink) {
-    int curpos = get_cursor_pos() * 2;
-    char *screen = (char *)VIDEO_MEMORY + curpos;
-    if (c == '\n') {
-        next_line();
-        return;
-    }
-    *screen = c;
-    *(screen + 1) = (c == toblink) ? (colors | 0b10000000) : colors;
-    move_next_cursor();
-}
+	int y=pos/80;
+	int x=pos%80;
+	int yp=(y*160)+VIDEO_MEMORY;
+	*((char*)yp+(x*2))=0x00;
+	*((char*)yp+(x*2)+1)=0x02;
+	set_cursor_pos(x,y);
 
-// Print a string of text at current cursor location
-void printtext(char *text, char colors, char toblink) {
-    while (*text) {
-        printchar(*text++, colors, toblink);
-    }
-}
-
-// Move the cursor to the next line
-void next_line() {
-    int curpos = get_cursor_pos();
-    int y = curpos / CHAR_PER_LINE;
-    y += 1;
-    if (y == 25) {
-        scroll();
-        y -= 1;
-    }
-    set_cursor_pos(0, y);
-}
-
-// Display a command prompt
-void display_prompt() {
-    char *prompt = ">";
-    printtext(prompt, 0x07, 0); // light grey on black
-}
-
-// Remove a character at the specified cursor position
-void rm_char_in_pos(int pos) {
-    int y = pos / CHAR_PER_LINE;
-    int x = pos % CHAR_PER_LINE;
-    char *screen = (char *)(VIDEO_MEMORY + y * 160 + x * 2);
-    *screen = 0x20; // space character
-    *(screen + 1) = 0x02; // attribute byte
-    set_cursor_pos(x, y);
 }

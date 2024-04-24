@@ -8,7 +8,11 @@ int strlen(char *str)
 	return len;
 }
 
-
+void memcpy(char *source, char *dest, int nbytes) {
+    for (int i = 0; i < nbytes; i++) {
+        *(dest + i) = *(source + i);
+    }
+}
 
 int strcmp(char *str1,char *str2)
 { 

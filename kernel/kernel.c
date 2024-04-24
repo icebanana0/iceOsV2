@@ -4,12 +4,6 @@
 #include "../include/keyboard.h"
 #include "../types.h"
 
-void memcpy(char *source, char *dest, int nbytes) {
-    for (int i = 0; i < nbytes; i++) {
-        *(dest + i) = *(source + i);
-    }
-}
-
 #define MAX_FILES 10
 #define MAX_FILENAME_LENGTH 32
 #define BLOCK_SIZE 512
@@ -96,6 +90,10 @@ void main() {
     while(1) {
         char buf[99];
         scan(buf, 99);
+        if(buf[0] == '\0') 
+        {
+            continue;
+        }
         if(strcmp(buf, "help") == 0) {
             printtext("commands:\nhelp-->print this\nclear-->clear screen\ncreate-->creates a file\ndelete-->deletes a file\nlist-->list files\n", 0x0a, 0);
         }

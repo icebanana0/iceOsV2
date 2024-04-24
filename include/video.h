@@ -1,5 +1,5 @@
-#ifndef VIDEO_DRIVER_H
-#define VIDEO_DRIVER_H
+#ifndef VIDEO
+#define VIDEO
 
 #define CHAR_PER_LINE 80
 #define VIDEO_MEMORY 0xb8000
