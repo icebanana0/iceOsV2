@@ -154,15 +154,15 @@ void main() {
     initFileSystem(&filesystem);
     clear_screen();
     while(1) {
-    printPrompt(&filesystem);
+        printPrompt(&filesystem);
         char command[99];
         char argument[MAX_FILENAME_LENGTH];
 
         scan(command, 99); // Scan for command input
-		if(command[0] == '\0') 
-		{
-			continue;
-		}
+        if(command[0] == '\0') {
+            continue;
+        }
+
         // Split the command and the argument
         char *space = strchr(command, ' ');
         if (space != NULL) {
@@ -173,27 +173,36 @@ void main() {
         }
 
         if(strcmp(command, "help") == 0) {
-            printtext("Available commands:\nhelp\nclear\ncreate [filename]\ndelete [filename]\nlist\ncreatedir [dirname]\nlistdir\ncd [dirname or ..]\n", 0x0a, 0);
-        } else if(strcmp(command, "clear") == 0) {
+            printtext("Available commands:\nhelp\nclear\ncreate [filename]\ndelete [filename]\nls\nmkdir [dirname]\ncd [dirname or ..]\n", 0x0a, 0);
+        } 
+        else if(strcmp(command, "clear") == 0) {
             clear_screen();
-        } else if(strcmp(command, "create") == 0 && argument[0] != '\0') {
+        } 
+        else if(strcmp(command, "create") == 0 && argument[0] != '\0') {
             if (createFile(&filesystem, argument) >= 0) {
                 printtext("File created successfully!\n", 0x0a, 0);
             } else {
                 printtext("Failed to create file. No free blocks available.\n", 0x04, 0);
             }
-        } else if(strcmp(command, "delete") == 0 && argument[0] != '\0') {
+        } 
+        else if(strcmp(command, "delete") == 0 && argument[0] != '\0') {
             if (deleteFile(&filesystem, argument) == 0) {
                 printtext("File deleted successfully!\n", 0x0a, 0);
             } else {
                 printtext("File not found or could not be deleted.\n", 0x04, 0);
             }
-        } else if(strcmp(command, "ls") == 0) {
+        } 
+        else if(strcmp(command, "ls") == 0) {
             listFiles(&filesystem);
             listDirectories(&filesystem);
-        } else if(strcmp(command, "cd") == 0 && argument[0] != '\0') {
+        } 
+        else if(strcmp(command, "cd") == 0 && argument[0] != '\0') {
             changeDirectory(&filesystem, argument);
-        } else {
+        } 
+        else if(strcmp(command, "mkdir") == 0 && argument[0] != '\0') {
+            createDirectory(&filesystem, argument);
+        } 
+        else {
             printtext("Unknown command or missing argument\n", 0x04, 0);
         }
     }
