@@ -158,7 +158,7 @@ void next_line()
 	}
 
 	set_cursor_pos(x,y);
-	printtext(">",0x0a,0);
+	// printtext(">",0x0a,0);
 
 
 }

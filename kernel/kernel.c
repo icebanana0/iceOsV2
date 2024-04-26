@@ -159,7 +159,10 @@ void main() {
         char argument[MAX_FILENAME_LENGTH];
 
         scan(command, 99); // Scan for command input
-
+		if(command[0] == '\0') 
+		{
+			continue;
+		}
         // Split the command and the argument
         char *space = strchr(command, ' ');
         if (space != NULL) {
@@ -185,15 +188,8 @@ void main() {
             } else {
                 printtext("File not found or could not be deleted.\n", 0x04, 0);
             }
-        } else if(strcmp(command, "list") == 0) {
+        } else if(strcmp(command, "ls") == 0) {
             listFiles(&filesystem);
-        } else if(strcmp(command, "createdir") == 0 && argument[0] != '\0') {
-            if (createDirectory(&filesystem, argument) >= 0) {
-                printtext("Directory created successfully!\n", 0x0a, 0);
-            } else {
-                printtext("Failed to create directory. No free directory entries.\n", 0x04, 0);
-            }
-        } else if(strcmp(command, "listdir") == 0) {
             listDirectories(&filesystem);
         } else if(strcmp(command, "cd") == 0 && argument[0] != '\0') {
             changeDirectory(&filesystem, argument);
