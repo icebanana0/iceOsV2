@@ -22,7 +22,13 @@ typedef uint8_t bool;
 
 #define NULL ((void *)0)
 
-#define low_16(address) (uint16)((address) & 0xFFFF)
-#define high_16(address) (uint16)(((address) >> 16) & 0xFFFF)
+#define low_16(address) (uint16_t)((address) & 0xFFFF)
+#define high_16(address) (uint16_t)(((address) >> 16) & 0xFFFF)
+
+#if defined(__x86_64__) || defined(_M_X64)
+typedef uint64_t size_t;  // Use uint64_t on 64-bit systems
+#else
+typedef uint32_t size_t;  // Use uint32_t on 32-bit systems
+#endif
 
 #endif
