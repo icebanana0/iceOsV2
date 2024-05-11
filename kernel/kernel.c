@@ -2,40 +2,24 @@
 #include "../include/stdio.h"
 #include "../include/video.h"
 #include "../include/keyboard.h"
+#include "../include/filesystem.h"
 #include "../types.h"
-
-#define MAX_FILES 10
-#define MAX_DIRS 5
-#define MAX_FILENAME_LENGTH 32
-#define BLOCK_SIZE 512
-#define MAX_BLOCKS 100
-#define ROOT_DIR 0
-#define MAX_TEXT_SIZE 4096 // Maximum size of text file
-
-typedef struct {
-    char filename[MAX_FILENAME_LENGTH];
-    uint32_t size;
-    uint32_t blocks[MAX_BLOCKS];
-    char content[MAX_TEXT_SIZE];
-    uint32_t parentDirIndex; // Index of the directory this file belongs to
-} FileEntry;
-
-typedef struct {
-    char dirname[MAX_FILENAME_LENGTH];
-    uint32_t blocks[MAX_BLOCKS];
-    uint8_t used;
-    uint32_t parentDirIndex; // Index of the parent directory
-} DirectoryEntry;
-
-typedef struct {
-    FileEntry files[MAX_FILES];
-    DirectoryEntry dirs[MAX_DIRS];
-    uint8_t blocks[MAX_BLOCKS][BLOCK_SIZE];
-    uint8_t freeBlocks[MAX_BLOCKS];
-} SimpleFileSystem;
 
 SimpleFileSystem filesystem;
 uint32_t currentDirIndex = ROOT_DIR;
+
+char* strcat(char* dst, const char* src) {
+    char* ptr = dst;
+    while (*ptr != '\0') {
+        ptr++;
+    }
+    while (*src != '\0') {
+        *ptr++ = *src++;
+    }
+    *ptr = '\0';
+
+    return dst;
+}
 
 void itoa(int value, char* str, int base) {
     char* ptr = str, *ptr1 = str, tmp_char;
@@ -66,35 +50,6 @@ void printnumber(int num) {
     printtext(numStr, 0x0a, 0);  // Assuming printtext handles strings and color
 }
 
-
-void initFileSystem(SimpleFileSystem* fs) {
-    for (int i = 0; i < MAX_FILES; i++) {
-        fs->files[i].size = 0;
-        fs->files[i].blocks[0] = 0;
-        fs->files[i].parentDirIndex = ROOT_DIR;
-    }
-    for (int i = 0; i < MAX_DIRS; i++) {
-        fs->dirs[i].used = 0;
-        fs->dirs[i].parentDirIndex = ROOT_DIR; // Initialize all directories under root
-    }
-    for (int i = 0; i < MAX_BLOCKS; i++) {
-        fs->freeBlocks[i] = 1;
-    }
-    strcpy(fs->dirs[ROOT_DIR].dirname, "root");
-    fs->dirs[ROOT_DIR].used = 1;
-    fs->dirs[ROOT_DIR].parentDirIndex = ROOT_DIR;
-}
-
-int findFreeBlock(SimpleFileSystem* fs) {
-    for (int i = 0; i < MAX_BLOCKS; i++) {
-        if (fs->freeBlocks[i]) {
-            fs->freeBlocks[i] = 0;
-            return i;
-        }
-    }
-    return -1;
-}
-
 int createFile(SimpleFileSystem* fs, const char* filename) {
     for (int i = 0; i < MAX_FILES; i++) {
         if (fs->files[i].size == 0) {
@@ -108,6 +63,29 @@ int createFile(SimpleFileSystem* fs, const char* filename) {
         }
     }
     return -1;
+}
+
+void editFile(SimpleFileSystem* fs, const char* filename) {
+    int fileIndex = -1;
+    for (int i = 0; i < MAX_FILES; i++) {
+        if (fs->files[i].size != 0 && strcmp(fs->files[i].filename, filename) == 0 && fs->files[i].parentDirIndex == currentDirIndex) {
+            fileIndex = i;
+            break;
+        }
+    }
+
+    if (fileIndex != -1) {
+        printtext("Enter text (max 4096 characters):\n", 0x0a, 0);
+        scan(fs->files[fileIndex].content, MAX_TEXT_SIZE);
+    } else {
+        int newIndex = createFile(fs, filename);
+        if (newIndex != -1) {
+            printtext("Enter text (max 4096 characters):\n", 0x0a, 0);
+            scan(fs->files[newIndex].content, MAX_TEXT_SIZE);
+        } else {
+            printtext("Failed to create or edit file.\n", 0x04, 0);
+        }
+    }
 }
 
 int createDirectory(SimpleFileSystem* fs, const char* dirname) {
@@ -227,29 +205,6 @@ void catFile(SimpleFileSystem* fs, const char* filename) {
     }
 }
 
-void editFile(SimpleFileSystem* fs, const char* filename) {
-    int fileIndex = -1;
-    for (int i = 0; i < MAX_FILES; i++) {
-        if (fs->files[i].size != 0 && strcmp(fs->files[i].filename, filename) == 0 && fs->files[i].parentDirIndex == currentDirIndex) {
-            fileIndex = i;
-            break;
-        }
-    }
-
-    if (fileIndex != -1) {
-        printtext("Enter text (max 4096 characters):\n", 0x0a, 0);
-        scan(fs->files[fileIndex].content, MAX_TEXT_SIZE);
-    } else {
-        int newIndex = createFile(fs, filename);
-        if (newIndex != -1) {
-            printtext("Enter text (max 4096 characters):\n", 0x0a, 0);
-            scan(fs->files[newIndex].content, MAX_TEXT_SIZE);
-        } else {
-            printtext("Failed to create or edit file.\n", 0x04, 0);
-        }
-    }
-}
-
 void memory_set(void *ptr, int value, size_t num) {
     unsigned char *p = ptr;
     while (num--) {
@@ -282,28 +237,26 @@ void main() {
 
         // Execute commands
         if(strcmp(command, "help") == 0) {
-            printtext("Available commands:\nhelp\nclear\ncat [filename]\nls\nmkdir [dirname]\ncd [dirname or ..]\nice [filename]\n", 0x0a, 0);
-        } else if(strcmp(command, "clear") == 0) {
-            clear_screen();
-        } else if(strcmp(command, "ls") == 0) {
-            listFiles(&filesystem);
-            listDirectories(&filesystem);
-        } else if(strcmp(command, "cd") == 0 && argument[0] != '\0') {
-            changeDirectory(&filesystem, argument);
-        } else if(strcmp(command, "mkdir") == 0 && argument[0] != '\0') {
-            createDirectory(&filesystem, argument);
-        } else if(strcmp(command, "ice") == 0 && argument[0] != '\0') {
-            editFile(&filesystem, argument);
-        } else if(strcmp(command, "cat") == 0 && argument[0] != '\0') {
-            catFile(&filesystem, argument);
-        } else {
-            printtext("Unknown command or missing argument\n", 0x04, 0);
-        }
+                    printtext("Available commands:\nhelp\nclear\ncat [filename]\nls\nmkdir [dirname]\ncd [dirname or ..]\nice [filename]\n", 0x0a, 0);
+                } else if(strcmp(command, "clear") == 0) {
+                    clear_screen();
+                } else if(strcmp(command, "ls") == 0) {
+                    listFiles(&filesystem);
+                    listDirectories(&filesystem);
+                } else if(strcmp(command, "cd") == 0 && argument[0] != '\0') {
+                    changeDirectory(&filesystem, argument);
+                } else if(strcmp(command, "mkdir") == 0 && argument[0] != '\0') {
+                    createDirectory(&filesystem, argument);
+                } else if(strcmp(command, "ice") == 0 && argument[0] != '\0') {
+                    editFile(&filesystem, argument);
+                } else if(strcmp(command, "cat") == 0 && argument[0] != '\0') {
+                    catFile(&filesystem, argument);
+                } else {
+                    printtext("Unknown command or missing argument\n", 0x04, 0);
+                }
 
         memory_set(command, 0, sizeof(command));  // Clear the command buffer using custom memory_set
         memory_set(argument, 0, sizeof(argument));  // Clear the argument buffer using custom memory_set
         
     }
 }
-
-
